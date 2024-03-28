@@ -1,4 +1,6 @@
-# С:
+# С:<
+import clearml
+from clearml import Task
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -51,6 +53,7 @@ def validate_result(model, model_name, validation_X, validation_y):
 
 
 def main():
+    Task.init(project_name="GoldPrediction", task_name="1step")
     # Импорт датасетов. Формат даты в исходниках yymmdd преобразуется с помощью parse_dates
     df1 = pd.read_csv("DataSources/GC_070904_090320.csv", parse_dates=[0],
                       usecols=lambda x: x != '<TIME>', index_col=['<DATE>'])  # , index_col=['<DATE>']
@@ -110,31 +113,6 @@ def main():
     print(extracted_features)
     extracted_features.to_csv('DataSources/extracted_features.csv', index=False)"""
 
-
-    """# Преобразуем названия столбцов в ожидаемый Prophet формат
-    df_prophet = df.rename(columns={'<DATE>': 'ds', '<CLOSE>': 'y'})
-
-    # Создаем и обучаем модель Prophet
-    model = Prophet()
-    model.fit(df_prophet)
-
-    # Создаем фрейм данных для будущих предсказаний (например, на следующие 30 дней)
-    future = model.make_future_dataframe(periods=30)
-
-    # Делаем предсказания
-    forecast = model.predict(future)
-
-    # Извлекаем некоторые признаки из предсказаний
-    # Например, можно извлечь тренд и сезонность
-    trend = forecast['trend']
-    seasonality = forecast['yearly']
-
-    # Добавляем извлеченные признаки обратно в датасет
-    df['trend'] = trend[:-30]  # Отсекаем предсказания на будущее
-    df['seasonality'] = seasonality[:-30]
-
-    # Проверяем обновленный датасет
-    print(df.head())"""
 
 
 if __name__ == '__main__':
