@@ -53,15 +53,15 @@ def validate_result(model, model_name, validation_X, validation_y):
 
 
 def main():
-    Task.init(project_name="GoldPrediction", task_name="1step")
+    # Task.init(project_name="GoldPrediction", task_name="1step")
     # Импорт датасетов. Формат даты в исходниках yymmdd преобразуется с помощью parse_dates
-    df1 = pd.read_csv("DataSources/GC_070904_090320.csv", parse_dates=[0],
+    df1 = pd.read_csv("GoldPrediction/DataSources/GC_070904_090320.csv", parse_dates=[0],
                       usecols=lambda x: x != '<TIME>', index_col=['<DATE>'])  # , index_col=['<DATE>']
-    df2 = pd.read_csv("DataSources/GC_090321_140320.csv", parse_dates=[0],
+    df2 = pd.read_csv("GoldPrediction/DataSources/GC_090321_140320.csv", parse_dates=[0],
                       usecols=lambda x: x != '<TIME>', index_col=['<DATE>'])
-    df3 = pd.read_csv("DataSources/GC_140321_190320.csv", parse_dates=[0],
+    df3 = pd.read_csv("GoldPrediction/DataSources/GC_140321_190320.csv", parse_dates=[0],
                       usecols=lambda x: x != '<TIME>', index_col=['<DATE>'])
-    df4 = pd.read_csv("DataSources/GC_190321_240319.csv", parse_dates=[0],
+    df4 = pd.read_csv("GoldPrediction/DataSources/GC_190321_240319.csv", parse_dates=[0],
                       usecols=lambda x: x != '<TIME>', index_col=['<DATE>'])
     print(df1.head())
 
