@@ -25,14 +25,14 @@ def windows_extracting(ds, data_window_size=30, label_window_size=7):
     # Создание списков с метками (y) для каждого промежутка, содержащих <label_window_size> последующих дней
     label_windows = []
     for i in range(data_window_size, len(data_windows) + data_window_size):
-        label_windows.append(ds[i:i + label_window_size]['<CLOSE>'].values)
+        label_windows.append(ds[i:i + label_window_size]['<CLOSE>'])
     # Проверка, что длины data_windows и label_windows совпадают
     assert len(data_windows) == len(label_windows)
 
     # Проверка, что последние промежутки не "зажевались"
     assert len(data_windows[-1]) == data_window_size and len(label_windows[-1]) == label_window_size
 
-    return np.array(data_windows), np.array(label_windows)
+    return data_windows, label_windows
 
 def validate_result(model, model_name, validation_X, validation_y):
     predicted = model.predict(validation_X)
@@ -42,7 +42,7 @@ def validate_result(model, model_name, validation_X, validation_y):
     R2_score = r2_score(validation_y, predicted)
     print('R2 score: ', R2_score)
 
-    plt.plot(predicted, 'r', label='Predict')
+    plt.plot(validation_y.index, predicted, 'r', label='Predict')
     plt.plot(validation_y, 'b', label='Actual')
     plt.ylabel('Price')
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
@@ -100,7 +100,7 @@ def main():
     print(len(dataset[0:1000]), len(dataset[1000:2000]))
 
 
-    lasso_clf = LassoCV(max_iter=6000, random_state=0)
+    lasso_clf = LassoCV(n_alphas=1000, max_iter=10000, random_state=0)
     lasso_clf_feat = lasso_clf.fit(dataset[0:2500], dataset['<CLOSE>'][2500:5000])  # data_windows[:-1], label_windows[:-1]
     validate_result(lasso_clf_feat, 'LassoCV', validation_X, validation_y)
     """plt.plot(dataset['<VOL>'], label="Volatility values")
