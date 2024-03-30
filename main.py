@@ -68,7 +68,7 @@ def validate_result(model, model_name):
 
 
 if __name__ == '__main__':
-    df_final = pd.read_csv("DataSources\FINAL_USO.csv", index_col=['Date'])  # , parse_dates=True)
+    df_final = pd.read_csv("FINAL_USO.csv", index_col=['Date'])  # , parse_dates=True)
     scaler = MinMaxScaler(feature_range=(0, 1))
     print(df_final.head())
     """plt.plot(df_final['Close'], label="Close values")
