@@ -38,14 +38,16 @@ def windows_extracting(ds, data_window_size=30, label_window_size=7):
 
     return data_windows, label_windows
 
-def validate_result(model, model_name, validation_X, validation_y):
-    # validation_X = validation_X[0:-1:7]
-    # validation_y = validation_y[0:-1:7]
+def validate_result(model, model_name, validation_X, validation_y, pred_window_size):
+    # validation_X = validation_X[0:-1:pred_window_size]
+    # validation_y = validation_y[0:-1:pred_window_size]
     plt.figure(figsize=(10, 6))
     predicted_data = []
     real_data = []
     losses = []
-    for i in range(0, len(validation_X), 7):
+    validation_X = validation_X[0:-1:pred_window_size]
+    validation_y = validation_y[0:-1:pred_window_size]
+    for i in range(0, len(validation_X)):
         y_pred = model.predict([validation_X[i]])
         predicted_data.extend(y_pred[0])
         real_data.extend(validation_y[i])
@@ -60,7 +62,6 @@ def validate_result(model, model_name, validation_X, validation_y):
 
     R2_score = r2_score(real_data, predicted_data)
     print('R2 score: ', R2_score)
-    validation_y = validation_y[0:-1:7]
     indexes = np.concatenate([df.index for df in validation_y])
     # print(indexes)
     plt.plot(indexes, predicted_data, 'r', label='Предсказания')  # validation_y.index, 
@@ -70,8 +71,11 @@ def validate_result(model, model_name, validation_X, validation_y):
     # Установка шага для отображения дат
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
     plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=12))
-    plt.title(model_name + ' Предсказания и реальные дынные')
+    plt.title(model_name + ' Предсказания и реальные данные')
     plt.legend(loc='upper right')
+    plt.show()
+    plt.plot(losses)
+    plt.xlabel(f'Средняя ошибка (%): {np.mean(losses)}')
     plt.show()
 
 
@@ -100,15 +104,13 @@ def main():
     print(dataset)
     print(dataset.head())
     print("dataset.shape: ", dataset.shape)
-    # X_train, Y_train, x_test, y_test = model_selection.train_test_split(dataset)
+
     """plt.plot(dataset['<CLOSE>'], label="Close values")
     plt.legend()
     plt.show()"""
 
-    """features_data = dataset
-
-    features_data['<PRICE_CHANGE>'] = dataset['<CLOSE>'] - dataset['<OPEN>']
-    features_data['<PRICE_RANGE>'] = dataset['<HIGH>'] - dataset['<LOW>']"""
+    """dataset['<PRICE_CHANGE>'] = dataset['<CLOSE>'] - dataset['<OPEN>']
+    dataset['<PRICE_RANGE>'] = dataset['<HIGH>'] - dataset['<LOW>']"""
     
     
     features_ds = pd.read_csv("GoldPrediction\DataSources\extracted_features_cleaned.csv").iloc[:, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 45, 55, 67, 113, 114]]
@@ -117,7 +119,6 @@ def main():
     print(features_ds.head())
     print(features_ds.iloc[1])
     print("=====features dataset concat=====")
-    print(dataset.head())
     # dataset = dataset.join(features_ds)
     dataset = pd.concat([dataset, features_ds], axis=1)
     # dataset.to_csv('GoldPrediction\DataSources\concat_data.csv')
@@ -133,23 +134,12 @@ def main():
     for column in columns:
         dataset[column] = scaler.fit_transform(dataset[[column]])
     # dataset.to_csv('GoldPrediction\DataSources\concat_data.csv')
-    data_windows, label_windows = windows_extracting(dataset, data_window_size=30, label_window_size=7)
 
-    """print("Пример последнего промежутка данных и соответствующих меток:")
-    print(data_windows[-1])
-    print(label_windows[-1])
+    # !!! сколько дней нужно предсказать
+    pred_window_size=1
 
-    validation_X, validation_y = data_windows[-1], label_windows[-1]
+    data_windows, label_windows = windows_extracting(dataset, data_window_size=30, label_window_size=pred_window_size)
 
-    X_train, y_train = data_windows[:-1], label_windows[:-1]
-    print("validation_X, validation_y: \n", validation_X, validation_y)
-    print(len(validation_X), len(validation_y))
-    print(len(dataset[0:1000]), len(dataset[1000:2000]))
-
-
-    lasso_clf = LassoCV(n_alphas=1000, max_iter=10000, random_state=0)
-    lasso_clf_feat = lasso_clf.fit(dataset[0:2500], dataset['<CLOSE>'][2500:5000])  # data_windows[:-1], label_windows[:-1]
-    validate_result(lasso_clf_feat, 'LassoCV', validation_X, validation_y)"""
     # Преобразование списков окон данных и меток в массивы numpy
     X = data_windows
     y = label_windows
@@ -165,8 +155,8 @@ def main():
     y_train, y_test = y[:split], y[split:]
 
     # Создание и обучение модели линейной регрессии
-    model = LinearRegression()
-    # model = lm.MultiTaskLassoCV(n_alphas=1000, max_iter=10000, random_state=0)
+    # model = LinearRegression()
+    model = lm.MultiTaskLassoCV(n_alphas=1000, max_iter=6000, random_state=0)
     # model = lm.RidgeCV()
     # Преобразование X_train и X_test в двумерные списки
 
@@ -177,6 +167,8 @@ def main():
     X_test_flat = np.array([np.array(window.values.flatten()) for window in X_test])
     print("Обучение модели...")
     fitted_model = model.fit(X_train_flat, y_train)
+
+    
     selected_model = SelectFromModel(fitted_model)
     selected_model.fit(X_train_flat, y_train)
     sup = selected_model.get_support()
@@ -185,10 +177,7 @@ def main():
     X_train_flat = X_train_flat[:, sup_indexes]
     X_test_flat = X_test_flat[:, sup_indexes]
     model = model.fit(X_train_flat, y_train)
-    # zipped = zip(X_train_flat,sup)
-    # print(*zipped)
-    # Предсказание на тестовом наборе
-    #y_pred = model.predict(X_test_flat)
+
     # Списки для хранения предсказанных и реальных данных
     predicted_data = []
     real_data = []
@@ -197,7 +186,7 @@ def main():
     left_border = 200
     right_border = 400
     losses = []
-    for i in range(left_border, right_border, 7):
+    for i in range(left_border, right_border, pred_window_size):
         y_pred = model.predict([X_test_flat[i]])
         predicted_data.extend(y_pred[0])
         real_data.extend(y_test[i])
@@ -215,12 +204,12 @@ def main():
     plt.plot(predicted_data, label='Предсказанные данные', color='red')
     plt.plot(real_data, label='Реальные данные', color='blue')
     plt.title('Сравнение реальных и предсказанных данных')
-    plt.xlabel(f'Средняя ошибка: {total_loss}')
+    plt.xlabel(f'Средняя ошибка  (%): {total_loss}')
     plt.ylabel('Цена закрытия')
     plt.legend()
     plt.grid(True)
     plt.show()
-    validate_result(model, "Linear", X_test_flat, y_test)
+    validate_result(model, "Linear", X_test_flat, y_test, pred_window_size)
     """plt.plot(dataset['<VOL>'], label="Volatility values")
     plt.legend()
     plt.show()"""
