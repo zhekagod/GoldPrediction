@@ -45,7 +45,7 @@ def validate_result(model, model_name, validation_X, validation_y):
     predicted_data = []
     real_data = []
     losses = []
-    for i in range(0, len(validation_X), 9):
+    for i in range(0, len(validation_X), 7):
         y_pred = model.predict([validation_X[i]])
         predicted_data.extend(y_pred[0])
         real_data.extend(validation_y[i])
@@ -60,7 +60,7 @@ def validate_result(model, model_name, validation_X, validation_y):
 
     R2_score = r2_score(real_data, predicted_data)
     print('R2 score: ', R2_score)
-    validation_y = validation_y[0:-1:9]
+    validation_y = validation_y[0:-1:7]
     indexes = np.concatenate([df.index for df in validation_y])
     # print(indexes)
     plt.plot(indexes, predicted_data, 'r', label='Предсказания')  # validation_y.index, 
@@ -133,7 +133,7 @@ def main():
     for column in columns:
         dataset[column] = scaler.fit_transform(dataset[[column]])
     # dataset.to_csv('GoldPrediction\DataSources\concat_data.csv')
-    data_windows, label_windows = windows_extracting(dataset, data_window_size=30, label_window_size=9)
+    data_windows, label_windows = windows_extracting(dataset, data_window_size=30, label_window_size=7)
 
     """print("Пример последнего промежутка данных и соответствующих меток:")
     print(data_windows[-1])
@@ -165,8 +165,8 @@ def main():
     y_train, y_test = y[:split], y[split:]
 
     # Создание и обучение модели линейной регрессии
-    # model = LinearRegression()
-    model = lm.MultiTaskLassoCV(n_alphas=1000, max_iter=10000, random_state=0)
+    model = LinearRegression()
+    # model = lm.MultiTaskLassoCV(n_alphas=1000, max_iter=10000, random_state=0)
     # model = lm.RidgeCV()
     # Преобразование X_train и X_test в двумерные списки
 
@@ -194,10 +194,10 @@ def main():
     real_data = []
 
     # Построение графиков предсказанных и реальных данных
-    left_border = 1200
-    right_border = 1400
+    left_border = 200
+    right_border = 400
     losses = []
-    for i in range(left_border, right_border, 9):
+    for i in range(left_border, right_border, 7):
         y_pred = model.predict([X_test_flat[i]])
         predicted_data.extend(y_pred[0])
         real_data.extend(y_test[i])
