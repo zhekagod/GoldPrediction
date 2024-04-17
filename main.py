@@ -243,3 +243,35 @@ else:
 #         st.write(chat_df['<CLOSE>'].iloc[0])
 #     else:
 #       st.write('Данные для выбранной даты отсутствуют')
+import plotly.graph_objects as go
+
+fig = go.Figure(data=[go.Candlestick(x=data.index,
+                open=data['<OPEN>'],
+                high=data['<HIGH>'],
+                low=data['<LOW>'],
+                close=data['<CLOSE>'])])
+
+# Настройка цветов свечей в зависимости от изменения цены
+fig.update_layout(xaxis_rangeslider_visible=False)  # Убираем ползунок для увеличения масштаба на оси x
+fig.update_traces(selector=dict(type='candlestick'), 
+                  increasing_line_color='green', 
+                  decreasing_line_color='red')
+
+buttons_to_add = [
+    'drawline',
+    'drawopenpath',
+    'drawclosedpath',
+    'drawcircle',
+    'drawrect',
+    'eraseshape'
+]
+
+fig.update_layout(
+    title='Свечной график цен на золото',
+    xaxis_title='Дата',
+    yaxis_title='Цена',
+    dragmode='zoom',
+    modebar_add=buttons_to_add
+)
+
+st.plotly_chart(fig)  # Перерисовываем график с обновленными настройками
