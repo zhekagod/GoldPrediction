@@ -33,6 +33,10 @@ pip install -r requirements.txt
 python main.py
 ```
 # Структура проекта
+main: Реализация последней рабочей версии прогнозирующей программы с моделью LSTM
+
+front: Реализация приложения на Streamlit
+
 step2: Реализация модели MultiTaskLassoCV
 
 step3: Реализация модели Sklearn Pipeline
