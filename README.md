@@ -33,16 +33,14 @@ pip install -r requirements.txt
 python main.py
 ```
 # Структура проекта
-...: Папка с данными, включая исторические цены на золото.
-...: ...
-...: Исходные файлы проекта.
-...: Вспомогательные функции.
-...: Скрипт для предобработки данных.
-...: Модели машинного обучения.
-...: Основной скрипт для запуска анализа и построения моделей.
+step2: Реализация модели MultiTaskLassoCV
+
+step3: Реализация модели Sklearn Pipeline
+
+step4: Реализация модели SARIMAX.
 
 # Отчеты в ClearML
-Отчеты о прогнозировании цены на золото параллельно создаются в ClearML. Вы можете найти подробные результаты экспериментов, включая метрики моделей и графики, в (ссылка на ClearML)
+Отчеты о прогнозировании цены на золото параллельно создаются в ClearML. Вы можете найти подробные результаты экспериментов, включая метрики моделей и графики, [здесь](https://app.clear.ml/projects/f3cfb7e55b9b496c9f9c8747eec0be76/experiments/ffed92fa668e4b4b899dae5a681a1eb7/execution?columns=selected&columns=type&columns=name&columns=tags&columns=status&columns=project.name&columns=users&columns=started&columns=last_update&columns=last_iteration&columns=parent.name&order=-last_update&filter=)
 
 
 
