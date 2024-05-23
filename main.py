@@ -188,22 +188,30 @@ st.sidebar.audio("audio/archivo.mp3")
 #   )
 #31333F
 # Чтение данных из файла
-data = pd.read_csv('datas\GC_230314_240314.csv', delimiter=';')
+data = pd.read_csv('datas/1jan2024to22maypred.csv', delimiter=',')
 
 # Преобразование столбца с датой в формат datetime
-data['<DATE_TIME>'] = pd.to_datetime(data['<DATE>'].astype(str) + ' ' + data['<TIME>'].astype(str), format='%y%m%d %H%M%S')
+# data['<DATE_TIME>'] = pd.to_datetime(data['<DATE>'].astype(str) + ' ' + data['<TIME>'].astype(str), format='%Y%m%d %H%M%S')
+data['<DATE_TIME>'] = pd.to_datetime(data['<DATE>'].astype(str), format='%Y%m%d')
 #data['<DATE>'] = pd.to_datetime(data['<DATE>'] + ' ' + data['<TIME>'])
 data.set_index('<DATE_TIME>', inplace=True)
 # Создание веб-приложения с использованием Streamlit
 st.title('Графики цен')
 
 choosen_date = st.date_input("Выберите дату:", value = datetime.now().date(), 
-  min_value = date(2011, 1, 1), 
-  max_value = (datetime.now() + timedelta(days=30)).date())
+  min_value = date(2024, 5, 16), 
+  # max_value = (datetime.now() + timedelta(days=30)).date())
+  max_value = (datetime.now()).date())
+
 
 df = pd.DataFrame(data)
 
 filtered_df = data[data.index.date == choosen_date]
+
+pred_df = pd.read_csv('datas/nowa_df_from23may_prkur.csv', delimiter=';')
+pred_df['<DATE_TIME>'] = pd.to_datetime(pred_df['date'].astype(str), format='%Y%m%d')
+pred_df.set_index('<DATE_TIME>', inplace=True)
+filtered_pred_df = pred_df[pred_df.index.date == choosen_date]
 
 if not filtered_df.empty:
     with st.spinner(text='In progress'):
@@ -213,7 +221,7 @@ if not filtered_df.empty:
     st.write(filtered_df['<OPEN>'].iloc[0])  # Первое значение графика в выбранную дату
     st.divider()
     st.subheader("Прогнозируемая цена на выбранную дату:")
-    st.write(filtered_df['<CLOSE>'].iloc[0])  # Второе значение графика в выбранную дату
+    st.write(filtered_pred_df['predict'].iloc[0])  # Второе значение графика в выбранную дату
     st.divider()
 else:
     st.write('Данные для выбранной даты отсутствуют')
@@ -229,6 +237,122 @@ elif chart_type == 'Цена закрытия':
 else:
   st.subheader('График объема торгов')
   st.line_chart(data['<VOL>'])
+
+
+data['<TOMORROW_OPEN>'] = data['<OPEN>'].shift(-1)
+data['<TOMORROW_CLOSE>'] = data['<CLOSE>'].shift(-1)
+if(st.sidebar.button('Угловой график')):
+  st.subheader('Модель')
+  fig, ax = plt.subplots()
+  for i in range(len(data) - 1):
+    ax.plot([data.index[i], data.index[i + 1]], [data['<OPEN>'][i], data['<TOMORROW_CLOSE>'][i]], color='red')
+    ax.plot([data.index[i], data.index[i + 1]], [data['<OPEN>'][i], data['<TOMORROW_OPEN>'][i]], color='blue')
+  ax.plot(data.index, data['<CLOSE>'], label='Закрытие', color='orange')
+  ax.legend(['OPEN -> CLOSE', 'OPEN -> OPEN'])
+  ax.set_ylim(bottom=1800)
+  st.plotly_chart(fig)
+
+data_fm = pd.read_excel('datas/first_model.xlsx', nrows=200)
+
+data_fm['<TOMORROW_PRED>'] = data_fm.iloc[:, 0].shift(-1)
+data_fm['<TOMORROW_REAL>'] = data_fm.iloc[:, 1].shift(-1)
+if(st.sidebar.button('Модель 1')):
+  st.subheader('Модель 1')
+  fig, ax = plt.subplots()
+  for i in range(len(data_fm) - 1):
+    ax.plot([data_fm.index[i], data_fm.index[i + 1]], [data_fm.iloc[:, 1][i] * 1000, data_fm['<TOMORROW_PRED>'][i] * 1000], color='red')
+    ax.plot([data_fm.index[i], data_fm.index[i + 1]], [data_fm.iloc[:, 1][i] * 1000, data_fm['<TOMORROW_REAL>'][i] * 1000], color='blue')
+  ax.plot(data_fm.index, data_fm.iloc[:, 0] * 1000, label='predicted', color='orange')
+  ax.legend(['real -> predict', 'real -> real'])
+  # ax.set_ylim(bottom=1800)
+  st.plotly_chart(fig)
+
+data_lm = pd.read_excel('datas/Linear_modeL.xlsx', nrows=314)
+if(st.sidebar.button('Модель 2 (линейная)')):
+  st.subheader('Модель 2 (линейная)')
+  figu, ax = plt.subplots()
+  ax.plot(data_lm.index, data_lm.iloc[:, 1] * 1000, label='Реальные')
+  ax.plot(data_lm.index, data_lm.iloc[:, 0] * 1000, label='Предсказанные')
+  ax.legend()
+  st.plotly_chart(figu)
+
+data_fc = pd.read_excel('datas/forecast_data.xlsx', nrows=314)
+if(st.sidebar.button('Модель 3 (sarima)')):
+  st.subheader('Модель 3 (sarima)')
+  figu, ax = plt.subplots()
+  ax.plot(data_fc.index, data_fc.iloc[:, 1] * 1000, label='Реальные')
+  ax.plot(data_fc.index, data_fc.iloc[:, 3] * 1000, label='Предсказанные')
+  ax.legend()
+
+  st.plotly_chart(figu)
+
+data_last30 = pd.read_csv("datas/1jan2024to22maypred.csv", parse_dates=[0],
+                  usecols=lambda x: x != '<TIME>', index_col=['<DATE>']).iloc[-30:-1]['<CLOSE>'].values
+
+data_nowa = pd.read_csv('datas/nowa_df.csv', delimiter=';')
+if(st.sidebar.button('Модель 4 (sklearn)')):
+  st.subheader('Модель 4 (sklearn)')
+  figu, ax = plt.subplots()
+  ax.plot(np.append(data_last30, data_nowa.iloc[:, 1]), label='real')
+  ax.plot(np.append(data_last30, data_nowa.iloc[:, 2]), color='aqua', label='prediction')
+  ax.plot(data_last30, color='blue', label='previous')
+  ax.legend()
+  st.plotly_chart(figu)
+
+data_lstm = pd.read_csv('datas/nowa_df_lstm.csv', delimiter=';')
+if(st.sidebar.button('Модель 5 (lstm)')):
+  st.subheader('Модель 5 (lstm)')
+  figu, ax = plt.subplots()
+  ax.plot(np.append(data_last30, data_lstm.iloc[:, 1]), label='real')
+  ax.plot(np.append(data_last30, data_lstm.iloc[:, 2]), color='aqua', label='prediction')
+  ax.plot(data_last30, color='blue', label='previous')
+  ax.legend()
+  st.plotly_chart(figu)
+
+data_pred = pd.read_csv('datas/nowa_df_from23may_prkur.csv', delimiter=';')
+if(st.sidebar.button('Сравнение с прогнозом (sklearn)')):
+  st.subheader('Сравнение с прогнозом (sklearn)')
+  figu, ax = plt.subplots()
+  ax.plot(np.append(data_last30, data_pred.iloc[:, 1]), label='real')
+  ax.plot(np.append(data_last30, data_pred.iloc[:, 2]), color='aqua', label='prediction')
+  ax.plot(np.append(data_last30, data_pred.iloc[:, 3]), label='forecast')
+  ax.plot(data_last30, color='blue', label='previous')
+  ax.legend()
+  st.plotly_chart(figu)
+
+
+
+
+
+# if st.sidebar.button('Модель 1'):
+#     st.subheader('Модель 1')
+    
+#     # Создадим новый график
+#     fig, ax = plt.subplots()
+    
+#     # Получим индексы точек открытия и закрытия
+#     open_indices = data['<OPEN>'].index
+#     close_indices = data['<CLOSE>'].index
+    
+#     # Построим линии открытия к следующему открытию
+#     for i in range(len(open_indices) - 1):
+#         ax.plot([open_indices[i], open_indices[i+1]], [data.loc[open_indices[i], '<OPEN>'], data.loc[open_indices[i+1], '<OPEN>']], color='blue')
+    
+#     # Построим линии открытия к следующему закрытию
+#     for i in range(len(open_indices)):
+#         ax.plot([open_indices[i], close_indices[i]], [data.loc[open_indices[i], '<OPEN>'], data.loc[close_indices[i], '<CLOSE>']], color='red')
+    
+#     # Установим метки осей и заголовок
+#     ax.set_xlabel('Время')
+#     ax.set_ylabel('Цена')
+#     ax.set_title('График открытия и закрытия')
+    
+#     # Отобразим график
+#     st.pyplot(fig)
+
+# if(st.sidebar.button('Модель 2')):
+#   st.subheader('Модель 2')
+#   st.line_chart(data['<OPEN>'])
 
 # chat_date_str = st.chat_input("Write the date")
 # chat_date = datetime.now().date()

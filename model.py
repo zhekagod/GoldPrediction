@@ -120,22 +120,27 @@ model = Sequential([
     Dropout(0.2),
     LSTM(units=50),
     Dropout(0.2),
-    Dense(10)  # Увеличим количество признаков до 10
+    Dense(10)
 ])
 
+# def custom_loss(y_true, y_pred):
+#     # Штраф за предсказание, совпадающее с предыдущими ценами
+#     mse_loss = tf.keras.losses.mean_squared_error(y_true, y_pred)
+#     shift_penalty = tf.reduce_mean(tf.square(y_pred[:, :-1] - y_true[:, 1:]))
+#     return mse_loss + shift_penalty
+
+# # Компиляция модели
+# model.compile(loss="mse",
+#               optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
+#             #   optimizer="SGD",
+#               metrics=['mse']
+# )
+
 def custom_loss(y_true, y_pred):
-    # Штраф за предсказание, совпадающее с предыдущими ценами
-    mse_loss = tf.keras.losses.mean_squared_error(y_true, y_pred)
-    shift_penalty = tf.reduce_mean(tf.square(y_pred[:, :-1] - y_true[:, 1:]))
-    return mse_loss + shift_penalty
+    # Штраф за предсказание, совпадающее с вчерашней ценой
+    return tf.keras.losses.mean_squared_error(y_true, y_pred) + tf.where(tf.abs(y_pred[:, 1] - y_true[:, 1]) < 0.1, 1.0, 0.0)
 
-# Компиляция модели
-model.compile(loss="mse",
-              # optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
-              optimizer="SGD",
-              metrics=['mse']
-)
-
+model.compile(optimizer='adam', loss=custom_loss)
 history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test), verbose=2)
 
 # Прогнозирование на тестовом наборе
