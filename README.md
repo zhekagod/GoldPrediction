@@ -6,11 +6,15 @@
 Целью данного проекта является разработка модели прогнозирования цены на золото на основе исторических данных. Мы используем различные методы анализа данных и машинного обучения для предсказания будущих цен на золото.
 
 # Состав команды
-A
-B
-C
-D
-E
+[Developer of forecasts and statistics](https://github.com/zhekagod)
+
+[Frontend developer](https://github.com/Deolys)
+
+[Developer of forecasts](https://github.com/Amaimonn)
+
+[Visual and statistic analyzer](https://github.com/lowskillmaster)
+
+[Visual and statistic analyzer](https://github.com/jamorAA)
 
 # Установка и запуск проекта
 
